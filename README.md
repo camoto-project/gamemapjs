@@ -75,3 +75,35 @@ You're ready to go!  To add a new format:
 
 If you use `Debug.log` rather than `console.log` then these messages can be left
 in for future diagnosis as they will only appear when `--debug` is given.
+
+### Development tips
+
+#### Levels inside .exe files
+
+If a game's levels are stored inside the main .exe file, or another file that
+contains other data, there are two ways this can be handled.  Remember that none
+of the libraries modify files in-place, they only read them into memory in full,
+and write new files from the data stored in memory.
+
+The first method is to have the map handler read the whole file, and store the
+extra unused .exe data so that it can be written out again in full when the maps
+are saved.  This method is simple but it cannot be used unless the only moddable
+data contained in the file is map data.  If it contains other data that can be
+modified, such as game graphics, then there is a problem.
+
+Imagine an .exe file with both maps and graphics.  The file is loaded by
+gamemapjs which decodes the game levels and stores the rest of the data for
+later.  Then gamegraphicsjs loads the same file, decodes the images, and also
+stores the rest of the data for later.  If both modified graphics and maps are
+then saved, what happens?  When the maps are saved the extra .exe data will be
+written, including the original graphics.  When the graphics are saved, the
+extra .exe data written includes the original maps.  So whichever one gets saved
+first will have its changes lost.
+
+So whenever a file contains multiple types of data, the second option must be
+used.  This is to add it to gamearchivejs as if it were an archive file.  In the
+example above, the map and graphics data would appear as separate files within
+the .exe "archive".  This allows the maps to be loaded from the map files inside
+the archive, the graphics loaded from the graphics files, and whenever any of
+them are saved, the archive handler takes care of combining all the data back
+into the complete .exe file.
