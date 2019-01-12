@@ -1,0 +1,40 @@
+{
+  "name": "@malvineous/gamemap",
+  "version": "1.1.1",
+  "description": "Read and write the playable levels used by DOS games",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Malvineous/gamemapjs.git"
+  },
+  "keywords": [
+    "camoto",
+    "libgamemaps",
+    "dos",
+    "ms-dos",
+    "level-editor",
+    "games",
+    "modding"
+  ],
+  "author": "Adam Nielsen <malvineous@shikadi.net>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Malvineous/gamemapjs/issues"
+  },
+  "homepage": "https://github.com/Malvineous/gamemapjs#readme",
+  "devDependencies": {
+    "eslint": "^5.9.0",
+    "mocha": "^5.2.0",
+    "mocha-eslint": "^4.1.0"
+  },
+  "dependencies": {
+    "@malvineous/record-io-buffer": "^2.2.0",
+    "bit-buffer": "^0.2.4"
+  },
+  "directories": {
+    "test": "test"
+  }
+}
