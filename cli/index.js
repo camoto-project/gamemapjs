@@ -22,7 +22,12 @@ const g_debug = Debug.extend('cli');
 
 import fs from 'fs';
 import commandLineArgs from 'command-line-args';
-import { all as gamemapFormats, Map2D } from '../index.js';
+import {
+	all as gamemapFormats,
+	Map2D,
+	Map2D_Layer_Tiled,
+	Map2D_Layer_List,
+} from '../index.js';
 
 class OperationsError extends Error {
 }
@@ -35,16 +40,23 @@ class Operations
 	info() {
 		const p = process.stdout.write.bind(process.stdout);
 		p(`Map class: ${this.map.constructor.name}\n`);
+
 		p(`Common properties:\n`);
-		p(' * Number of paths: ');
-		if (this.map.paths === null) {
-			p('N/A (not supported by this format)\n');
-		} else {
-			p(`${this.map.paths.length}\n`);
+		p(' * Attributes:\n');
+		for (const a of this.map.attributes) {
+			p(`    - ${a.id}=${a.value}`);
+			switch (a.type) {
+				case 'int': p(` [min=${a.rangeMin} max=${a.rangeMax}]`); break;
+				case 'bool': p(` [true/false]`); break;
+				default: p(` [unknown type "${a.type}"]`); break;
+			}
+			p(`  # ${a.title}\n`);
 		}
+
 		if (this.map instanceof Map2D) {
 			p(`Map type: 2D layered\n`);
-			p(` * Number of layers: ${this.map.layers.length}\n`);
+			p(` * Number of layers: ${this.map.layers.length} (`);
+			p(Object.keys(this.map.layers).join(', ') + ')\n');
 		} else {
 			p(`Map type: Unknown\n`);
 		}
@@ -116,6 +128,49 @@ class Operations
 
 		return await Promise.all(promises);
 	}
+
+	text(params) {
+		const p = process.stdout.write.bind(process.stdout);
+
+		if (!params.layer) {
+			throw new OperationsError('text: missing layer index.');
+		}
+
+		const layer = this.map.layers[params.layer];
+		if (!layer) {
+			throw new OperationsError(`text: layer ${params.layer} does not exist.`);
+		}
+		if (layer instanceof Map2D_Layer_Tiled) {
+			const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+			const size = this.map.size();
+			let codeMap = [], lastCode = 0;
+			for (let y = 0; y < size.y; y++) {
+				for (let x = 0; x < size.x; x++) {
+					const code = layer.tiles[y][x];
+					if (code === null) {
+						p(' ');
+					} else if (code === undefined) {
+						p('?');
+					} else {
+						const codeString = code.toString();
+						if (!codeMap[codeString]) {
+							codeMap[codeString] = chars[lastCode++];
+							lastCode %= chars.length;
+						}
+						p(codeMap[codeString]);
+					}
+				}
+				p('\n');
+			}
+		} else if (layer instanceof Map2D_Layer_List) {
+			for (const item of layer.items) {
+				p(`(${item.x},${item.y}) - ${item.code}\n`);
+			}
+		} else {
+			throw new OperationsError(`text: displaying layer type `
+				+ `"${layer.constructor.name}" has not been implemented yet.`);
+		}
+	}
 }
 
 Operations.names = {
@@ -126,6 +181,9 @@ Operations.names = {
 	],
 	save: [
 		{ name: 'target', defaultOption: true },
+	],
+	text: [
+		{ name: 'layer', defaultOption: true },
 	],
 };
 
@@ -188,6 +246,10 @@ Commands:
   save <file>
     Save the current map with any modifications to a new file, in its original
     file format.
+
+  text <layer>
+    Display layer number <layer> as text on stdout.  Output type varies
+    depending on the type of map layer.
 
 Examples:
 
