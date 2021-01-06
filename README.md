@@ -1,5 +1,5 @@
 # gamemap.js
-Copyright 2018-2019 Adam Nielsen <<malvineous@shikadi.net>>  
+Copyright 2010-2021 Adam Nielsen <<malvineous@shikadi.net>>  
 
 This is a Javascript library that can read and write the playable levels in
 some MS-DOS games from the 1990s.  The levels are returned in a generic form,
@@ -8,47 +8,50 @@ way.
 
 ## Installation as an end-user
 
-If you wish to use the command-line `gamemap` utility to work with the
-algorithms directly, you can install the library globally on your system:
+If you wish to use the command-line `gamemus` utility to work with map files
+directly, you can install the CLI globally on your system:
 
-    npm install -g @malvineous/gamemap
+    npm install -g @camoto/gamemap-cli
 
 ### Command line interface
 
 The `gamemap` utility can be used to inspect game levels.  Use the `--help`
 option to get a list of all the available options.  Some quick examples:
 
-    # List supported file formats
-    gamemap --formats
+    # Display information about a map
+    gamemap open -t map-ddave level01.dav info
+
+To get a list of supported file formats, run:
+
+    gamemus --formats
 
 ## Installation as a dependency
 
-If you wish to make use of the library in your own project, install it
-in the usual way:
+If you wish to make use of the library in your own project, install it in the
+usual way:
 
-    npm install @malvineous/gamemap
+    npm install @camoto/gamemap
 
 See `cli/index.js` for example use.  The quick start is:
 
-    const GameMap = require('@malvineous/gamemap');
+    import { map_cosmo } from '@camoto/gamecomp';
     
     // Read a game level
-    const mapHandler = GameCompression.getHandler('map-cosmo');
     const content = {
         main: fs.readFileSync('a1.mni'),
     };
-    let map = mapHandler.read(content);
+    let map = map_cosmo.parse(content);
     
     // Save the level to a new file
-    const output = mapHandler.write(map);
-    fs.writeFileSync('a1.new', output.main);
+    const output = map_cosmo.generate(map);
+    fs.writeFileSync('a1new.mni', output.main);
 
 ## Installation as a contributor
 
-If you would like to help add more file formats to the library, great!
-Clone the repo, and to get started:
+If you would like to help add more file formats to the library, great!  Clone
+the repo, and to get started:
 
-    npm install --dev
+    npm install
 
 Run the tests to make sure everything worked:
 
@@ -56,25 +59,44 @@ Run the tests to make sure everything worked:
 
 You're ready to go!  To add a new format:
 
- 1. Create a new file in the `map/` subfolder for the format.
+ 1. Create a new file in the `formats/` folder for your format.
+    Copying an existing file that covers a similar format will help
+    considerably.
 
- 2. Edit the main `index.js` and add a `require()` statement for your new file.
+ 2. Edit `formats/index.js` and add an `import` statement for your new file.
 
- 3. Make a folder in `test/` for your new algorithm and populate it with
-    files similar to the others.  The tests work by passing standard data to
-    each handler and comparing the result to what is inside this folder.
+ 3. Make a folder in `test/` for your new format and populate it with
+    files similar to the other formats.  The tests work by opening a sample
+    map in the new format and ensuring it matches some expected values (like it
+    only contains tiles the map format reports as being permitted).
     
     You can either create these files by hand, with another utility, or if you
     are confident that your code is correct, from the code itself.  This is done
     by setting an environment variable when running the tests, which will cause
     the data produced by your code to be saved to a temporary file in the
-    current directory:
+    format's test directory:
     
         SAVE_FAILED_TEST=1 npm test
-        mv error1.bin test/map-myformat/default.bin
+        cd test/map-myformat/ && mv default.bin.failed_test_output default.bin
 
-If you use `Debug.log` rather than `console.log` then these messages can be left
-in for future diagnosis as they will only appear when `--debug` is given.
+If your file format has any sort of compression or encryption, these algorithms
+should go into the [gamecomp.js](https://github.com/Malvineous/gamecompjs)
+project instead.  This is to make it easier to reuse the algorithms, as many of
+them (particularly the compression ones) are used amongst many unrelated file
+formats.  All the gamecomp.js algorithms are available to be used by any format
+in this library.
+
+During development you can test your code like this:
+
+    # Read a sample song and list its details, with debug messages on
+    $ DEBUG='gamemap:*' ./bin/gamemap open -f map-myformat example.map info
+
+    # Run unit tests just for your format only
+    npm test -- -g map-myformat
+
+If you use `debug()` rather than `console.log` then these messages can be left
+in for future diagnosis as they will only appear when the `DEBUG` environment
+variable is set appropriately.
 
 ### Development tips
 
