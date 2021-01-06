@@ -1,0 +1,14 @@
+{
+  "name": "@camoto/gamemap-cli",
+  "version": "1.0.0",
+  "description": "CLI for gamemap.js, for use with `npm install -g`",
+  "bin": {
+    "gamemap": "./node_modules/@camoto/gamemap/bin/gamemap.js"
+  },
+  "author": "Adam Nielsen <malvineous@shikadi.net>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@camoto/gamemap": "*",
+    "command-line-args": "^5.1.1"
+  }
+}
