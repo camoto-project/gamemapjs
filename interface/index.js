@@ -1,5 +1,5 @@
 /*
- * Main library interface.
+ * Interface aggregator.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -17,21 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Debug from './util/debug.js';
-const debug = Debug.extend('index');
-
-import * as formats from './formats/index.js';
-
-export * from './formats/index.js';
-export * from './interface/index.js';
-
-/**
- * Get a list of all the available handlers.
- *
- * This is preferable to `import *` because most libraries also export utility
- * functions like the autodetection routine which would be included even though
- * they are not format handlers.
- */
-export const all = [
-	...Object.values(formats),
-];
+export { default as Map } from './map.js';
+export { default as Map_Item } from './map-item.js';
+export { default as Map2D } from './map2d.js';
+export { default as Map2D_Item } from './map2d-item.js';
+export { default as Map2D_Layer } from './map2d-layer.js';
+export { default as Map2D_Layer_List } from './map2d-layer-list.js';
+export { default as Map2D_Layer_Tiled } from './map2d-layer-tiled.js';

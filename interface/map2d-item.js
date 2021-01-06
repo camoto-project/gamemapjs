@@ -1,5 +1,5 @@
 /*
- * Main library interface.
+ * Map element contained within a layer in a 2D map.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -17,21 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Debug from './util/debug.js';
-const debug = Debug.extend('index');
+import Map_Item from './map-item.js';
 
-import * as formats from './formats/index.js';
+export default class Map2D_Item extends Map_Item
+{
+	constructor() {
+		super();
 
-export * from './formats/index.js';
-export * from './interface/index.js';
-
-/**
- * Get a list of all the available handlers.
- *
- * This is preferable to `import *` because most libraries also export utility
- * functions like the autodetection routine which would be included even though
- * they are not format handlers.
- */
-export const all = [
-	...Object.values(formats),
-];
+		// Add coordinates to the item.
+		this.x = undefined;
+		this.y = undefined;
+	}
+}
