@@ -26,13 +26,14 @@
   },
   "homepage": "https://github.com/Malvineous/gamemapjs#readme",
   "devDependencies": {
-    "eslint": "^5.9.0",
-    "mocha": "^5.2.0",
-    "mocha-eslint": "^4.1.0"
+    "command-line-args": "^5.1.1",
+    "eslint": "^7.17.0",
+    "mocha": "^8.2.1",
+    "mocha-eslint": "^6.0.0"
   },
   "dependencies": {
-    "@malvineous/record-io-buffer": "^2.2.0",
-    "bit-buffer": "^0.2.4"
+    "@camoto/record-io-buffer": "^3.0.0",
+    "debug": "^4.3.1"
   },
   "directories": {
     "test": "test"
