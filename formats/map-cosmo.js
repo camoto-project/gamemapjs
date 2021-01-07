@@ -31,6 +31,8 @@ import {
 	Map2D,
 	Map2D_Layer_List,
 	Map2D_Layer_Tiled,
+	Item,
+	Item_Map2D_Layer_List,
 } from '../interface/index.js';
 
 const recordTypes = {
@@ -50,6 +52,15 @@ const HEADER_LEN = 6;
 const ACTOR_LEN = 6;
 const ACTOR_LEN_UINT16 = ACTOR_LEN / 2;
 
+// Actor layer limits.
+const MAX_PLAYERS = 1;
+const MAX_PLATFORMS = 10;
+const MAX_LIGHTS = 199;
+// Although technically the game can store 10922 actors (a 65535-byte memory
+// block divided by the 6-byte actor structure) it stops reading the block
+// after actor #410, discarding the rest of the data.
+const MAX_ACTORS = 410;
+
 // Number of tiles in the background layer.
 const COSMO_BG_LEN = 32764;
 
@@ -58,6 +69,9 @@ const COSMO_BG_MIN_X = 38;
 const COSMO_BG_MIN_Y = 18;
 const COSMO_BG_MAX_X = COSMO_BG_LEN / COSMO_BG_MIN_Y;
 const COSMO_BG_MAX_Y = COSMO_BG_LEN / COSMO_BG_MIN_X;
+
+const COSMO_BG_TILE_WIDTH = 8;
+const COSMO_BG_TILE_HEIGHT = 8;
 
 class Layer_CosmoBG extends Map2D_Layer_Tiled
 {
@@ -71,10 +85,28 @@ class Layer_CosmoBG extends Map2D_Layer_Tiled
 
 			// Turn zero codes into blanks.
 			if (tileCodes[i] === 0) {
-				tileCodes[i] = null;
+				continue;
+				//tileCodes[i] = null;
 			}
 
-			this.tiles[y][x] = tileCodes[i];
+			let item = new Item();
+
+			let imageIndex = Math.floor(tileCodes[i] / 8);
+			if (imageIndex >= 2000) {
+				imageIndex = 2000 + (imageIndex - 2000) / 5;
+			}
+			if (imageIndex >= 3000) {
+				debug(`Tile code ${tileCodes[i]} (image index ${imageIndex}) is out `
+					+ `of range (max 2999).`);
+				item.display = [
+					{icon: Item.Icons.Error},
+				];
+			} else {
+				item.display = [
+					{i: imageIndex}
+				];
+			}
+			this.tiles[y][x] = item;
 		}
 	}
 
@@ -97,7 +129,123 @@ class Layer_CosmoActors extends Map2D_Layer_List
 	constructor(actors) {
 		super();
 
-		this.items = actors;
+		for (const actor of actors) {
+			let item = new Item_Map2D_Layer_List();
+			item.x = actor.x;
+			item.y = actor.y;
+			item.code = actor.code;
+			item.display = this.displayFromActorType(actor.code);
+			if (item.display.x) item.display.x *= COSMO_BG_TILE_WIDTH;
+			if (item.display.y) item.display.y *= COSMO_BG_TILE_HEIGHT;
+			this.items.push(item);
+		}
+	}
+
+	displayFromActorType(code) {
+		let display = [
+			{ i: code - 31 },
+		];
+		const makeCrate = n => {
+			display = [
+				{ i: 0 },
+				{ i: n || display[0].i },
+			];
+		}
+		const makeBarrel = n => {
+			display = [
+				{ i: 29 },
+				{ i: n || display[0].i },
+			];
+		}
+
+		switch (code) {
+				// 31..34 ok
+			case 35: display[0].x = -4; break;
+				// 36 ok
+			case 37: display[0].x = -1; break;
+			case 38: display[0].y = 1; break;
+			case 39: display[0].y = 1; break;
+			case 40: display[0].y = 1; break;
+			case 41: display[0].y = 1; break;
+				// 42..46 ok
+			case 47: display[0].i = 16; break;
+			case 48: display[0].i = 17; break;
+			case 49: display[0].i = 18; break;
+				// 50?
+			case 51: display[1] = { icon: Item.Icons.UpDownArrow }; break;
+				// 52?
+			case 53: display[0].i = 20; display[1] = { icon: Item.Icons.LeftRightArrow }; break;
+				// 54?
+				// 55 ok
+				// 56 ok
+				// 57?
+				// 58?
+				// 59 ok
+			case 60: makeBarrel(28); break;
+				// 61?
+			case 62: makeCrate(32); break;
+			case 63: display[1] = { icon: Item.Icons.DownArrow }; break; // falling
+			case 64: makeCrate(33); break;
+			case 65: display[0].i = 33 /* not 34? */; display[1] = { icon: Item.Icons.DownArrow }; break; // falling
+			case 66: makeCrate(36); break;
+			case 67: display[1] = { icon: Item.Icons.DownArrow }; break; // falling
+			case 68: makeCrate(38); break;
+			case 69: display[1] = { icon: Item.Icons.DownArrow }; break; // falling
+				// 70 ok
+			case 71: display[1] = { icon: Item.Icons.DownArrow }; break; // coming down from ceiling
+				// 72 ok
+			case 73: display[0].y = 1; display[0].i++; break;
+			case 74: display[0].y = 1; break;
+				// 75..78 ok
+			case 79: display[0].y = 1; display[0].i++; break;
+			case 80: display[0].y = 1; break;
+			case 81: display[0].i--; display[0].yMirror = true; break;
+				// 82 ok
+			case 83: makeCrate(135); break;
+			case 84: makeCrate(136); break;
+				// 85 ok
+				// 86 ok
+			case 87: makeBarrel(57); break;
+				// 88 ok
+			case 89: makeBarrel(2); break;
+			case 90: display[0].i++; break;
+				// 91?
+			case 92: display[0].i--; break;
+				// 93..96 ok
+			case 97: display[0].i+=2; display[1] = { icon: Item.Icons.DownLeftDiagArrow }; break; // moving south-west
+			case 98: display[0].i++; display[1] = { icon: Item.Icons.DownRightDiagArrow }; break; // moving south-east
+			case 99: display[1] = { icon: Item.Icons.DownArrow }; break; // moving south
+				// 100..104 ok
+			case 105: display[0].i--; display[1] = { i: 70 }; break; // TODO: Replace overlay with Cosmo's head
+				// 106 ok
+				// 107?
+				// 108?
+				// 109 ok
+				// 110?
+			case 111: display[0].y = 2; break;
+			case 112: makeCrate(82); break;
+				// 113..114 ok
+			case 115: display[0].i--; display[0].y = 2; display[0].yMirror = true; break;
+			case 116: display[0].y = 2; break;
+				// 117..119 ok
+			case 120: display[0].x = -3; break;
+				// 121..123 ok
+			case 112: makeCrate(94); break;
+				// 125..126 ok
+			case 127: display[0].i--; display[0].y = 2; display[0].yMirror = true; break;
+				// 128?
+				// 129?
+				// 130?
+			case 131: makeBarrel(251); break;
+				// 132..133 ok
+
+				// TODO: Finish adding the rest of these
+
+			// Unknown actor type, show actor code like "FF?".
+			default: display[0] = { text: code.toString(16) + '?' };
+		}
+
+		return display;
 	}
 }
 
@@ -158,6 +306,37 @@ export default class Map_Cosmo extends MapHandler
 		};
 
 		return md;
+	}
+
+	static checkLimits(map) {
+		let issues = super.checkLimits(map);
+
+		const actorCount = map.layers[1].items.length;
+		if (actorCount > MAX_ACTORS) {
+			issues.push(`There are too many items in the actor layer `
+				+ `(${actorCount}), the maximum is ${MAX_ACTORS}.`);
+		}
+
+		let playerCount = 0, platformCount = 0, lightCount = 0;
+		for (const actor of map.layers[1].items) {
+			if (actor.code === 0) playerCount++;
+			else if ((actor.code >= 1) && (actor.code <= 5)) platformCount++;
+			else if ((actor.code >= 6) && (actor.code <= 8)) lightCount++;
+		}
+		if (playerCount > MAX_PLAYERS) {
+			issues.push(`There are too many player sprites in the actor layer `
+				+ `(${playerCount}), the maximum is ${MAX_PLAYERS}.`);
+		}
+		if (platformCount > MAX_PLATFORMS) {
+			issues.push(`There are too many platform/mud fountain sprites in the `
+				+ `actor layer (${platformCount}), the maximum is ${MAX_PLATFORMS}.`);
+		}
+		if (lightCount > MAX_LIGHTS) {
+			issues.push(`There are too many light sprites in the actor layer `
+				+ `(${lightCount}), the maximum is ${MAX_LIGHTS}.`);
+		}
+
+		return issues;
 	}
 
 	static parse({main: content}) {
