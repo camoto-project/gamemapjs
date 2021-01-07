@@ -65,8 +65,7 @@ export default class MapHandler
 	 *   supplied map from being written in this format.  An empty array
 	 *   indicates no problems.
 	 */
-	static checkLimits(map)
-	{
+	static checkLimits(map) {
 		const { limits } = this.metadata();
 		let issues = [];
 

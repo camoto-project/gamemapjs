@@ -34,17 +34,18 @@ export default class Map
 		this.metadata = {};
 
 		/**
-		 * An array of all the attributes supported by the map format in use.
+		 * An object listing all the attributes supported by the map format in use.
 		 *
 		 * The format handlers add all supported attributes when a format is read,
 		 * and read the current values when the map is written.  Only format
-		 * handlers may modify this array, with the exception of the `selection`
-		 * property on each array element, which may be modified at any time, within
-		 * the constraints specified for that attribute.
+		 * handlers may modify this array, with the exception of the `value`
+		 * property on each entry, which may be modified at any time, within the
+		 * constraints specified for that attribute.
 		 *
-		 * Each array element has the following properties:
+		 * The object keys are used as attribute identifier codes.  Keep them short
+		 * and avoid spaces.
 		 *
-		 *   - id: Internal code for finding IDs.  Keep it short and avoid spaces.
+		 * Each entry has the following properties:
 		 *
 		 *   - title: User-friendly name for the attribute.
 		 *
@@ -64,24 +65,67 @@ export default class Map
 		 *   - rangeMax: (integer) Maximum value in the range (see below).
 		 *
 		 *   - value: Current value.  This is the only value that can be
-		 *     changed outside of the format handlers.  Its value depends on which
-		 *     type of attribute this is:
-		 *
-		 *      - preset-single: A 0-based index into the `presets` array.
-		 *
-		 *      - preset-multiple*: An array of integers, each a 0-based index into
-		 *        the `presets` array.
-		 *
-		 *      - string: A string, at least `rangeMin` characters long, but no more
-		 *        than `rangeMax` characters.  Terminating nulls are not counted.
-		 *        If there is no minimum, `rangeMin` will be `0`.  If there is no
-		 *        maximum, `rangeMax` will be `0`.  The range values must not be
-		 *        negative.
-		 *
-		 *      - int: A number greater than or equal to `rangeMin`, and less than
-		 *        or equal to `rangeMax`.  The range values may be negative.
 		 */
-		this.attributes = [];
+		this.attributes = {};
+
+		/**
+		 * Values from the `attributes` array.
+		 *
+		 * The properties in this object can be modified at any time, subject to the
+		 * restrictions indicated for each attribute.
+		 *
+		 * The value of each property depends on which type of attribute it is:
+		 *
+		 *   - preset-single: A 0-based index into the `presets` array.
+		 *
+		 *   - preset-multiple*: An array of integers, each a 0-based index into
+		 *     the `presets` array.
+		 *
+		 *   - string: A string, at least `rangeMin` characters long, but no more
+		 *     than `rangeMax` characters.  Terminating nulls are not counted.
+		 *     If there is no minimum, `rangeMin` will be `0`.  If there is no
+		 *     maximum, `rangeMax` will be `0`.  The range values must not be
+		 *     negative.
+		 *
+		 *   - int: A number greater than or equal to `rangeMin`, and less than
+		 *     or equal to `rangeMax`.  The range values may be negative.
+		 */
+		this.attributeValues = {};
+
+		/**
+		 * As for `attributes` except these apply to items within the map.
+		 *
+		 * In this case the attribute value is stored in any
+		 * `Map_Item.attributeValues` object belonging to any item in the map.
+		 *
+		 * The object key in `this.attributes` matches the object key in
+		 * `Map_Item.attributeValues`.  If the object key does not exist in the
+		 * `Map_Item` list, then that attribute is not available for that item.
+		 * To include an attribute that does not have a value set but is available,
+		 * set its value to `null`.
+		 *
+		 * The use for this is format-dependent, but it can be used for things like
+		 * controlling which message is shown to the player when touching this item.
+		 *
+		 * Generally attributes should only be used when it is important to keep the
+		 * same item image visible in a map editor, but there needs to be a way to
+		 * distinguish otherwise identical items.  This works in tandem with a
+		 * callback function supplied in `Map_Item.display` which can read the
+		 * attributes and do something like overlay numbers on the item to aid
+		 * identification.
+		 *
+		 * There are some standard attributes which can be handled more conveniently
+		 * by map editors if they are present with the standard identifiers:
+		 *
+		 *  - `difficulty`: Preset list of game values.  Map editors can show the
+		 *    available options in a toolbar allowing all items in the map matching
+		 *    a particular difficulty level to be hidden or shown.
+		 *
+		 * Otherwise the attributes are specific to the map format and should be
+		 * presented to the user for each map item in a generic way (if the
+		 * attribute reports that it can be changed).
+		 */
+		this.itemAttributes = {};
 
 		/**
 		 * Some maps have a custom palette, which will be supplied here.  This

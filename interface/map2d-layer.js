@@ -87,55 +87,6 @@ export default class Map2D_Layer
 	}
 
 	/**
-	 * Convert a map code into an image.
-	 *
-	 * @param {Map2D_Item} item
-	 *   Tile to render.
-	 *
-	 * @param {GameGraphics.Tilesets}[] tilesets
-	 *   Array of tilesets.  Which tilesets and the order of them is controlled
-	 *   by the data stored in gameinfojs.
-	 *
-	 * @return {Object} with the following properties:
-	 *   - digit: number indicating which hex digits to show:
-	 *       null: show no digits
-	 *       0x10..0x1F = 0..F,
-	 *       0x100-0x1FF = 00..FF,
-	 *       0x10000-0x1FFFF = 0000..FFFF
-	 *   - img: GameGraphics.Image from the tileset, or null to show no image.
-	 *   - direction: {Object} as:
-	 */
-	// eslint-disable-next-line no-unused-vars
-	imageFromCode(code, tilesets) {
-		return {
-			/**
-			 * Overlay a hex number on the tile.
-			 *
-			 * null: show no digits
-			 * 0x10..0x1F = 0..F,
-			 * 0x100-0x1FF = 00..FF,
-			 * 0x10000-0x1FFFF = 0000..FFFF
-			 */
-			digit: null,
-
-			/**
-			 * {GameGraphics.Image} from the tileset, or null to show no image.
-			 */
-			img: null,
-
-			/**
-			 * Overlay some small icons to suggest movement in one or more directions.
-			 */
-			arrow: {
-				left: false,
-				right: false,
-				up: false,
-				down: false,
-			},
-		};
-	}
-
-	/**
 	 * Is the given tile permitted at the specified location?
 	 *
 	 * This function is called for each coordinate as the user moves the cursor

@@ -17,10 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+export { default as Item } from './item.js';
+export { default as Item_Map2D_Layer_List } from './item-map2d_layer_list.js';
+
 export { default as Map } from './map.js';
-export { default as Map_Item } from './map-item.js';
 export { default as Map2D } from './map2d.js';
-export { default as Map2D_Item } from './map2d-item.js';
 export { default as Map2D_Layer } from './map2d-layer.js';
 export { default as Map2D_Layer_List } from './map2d-layer-list.js';
 export { default as Map2D_Layer_Tiled } from './map2d-layer-tiled.js';

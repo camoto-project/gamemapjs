@@ -17,15 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Map_Item from './map-item.js';
+import Item from './item.js';
 
-export default class Map2D_Item extends Map_Item
+export default class Item_Map2D_Layer_List extends Item
 {
 	constructor() {
 		super();
 
-		// Add coordinates to the item.
+		// Add coordinates and dimensions to the item.
 		this.x = undefined;
 		this.y = undefined;
+		this.width = undefined;
+		this.height = undefined;
 	}
 }
