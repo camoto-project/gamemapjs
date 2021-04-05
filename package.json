@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/Malvineous/gamemapjs.git"
+    "url": "git+ssh://git@github.com/camoto-project/gamemapjs.git"
   },
   "keywords": [
     "camoto",
@@ -23,9 +23,9 @@
   "author": "Adam Nielsen <malvineous@shikadi.net>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/Malvineous/gamemapjs/issues"
+    "url": "https://github.com/camoto-project/gamemapjs/issues"
   },
-  "homepage": "https://github.com/Malvineous/gamemapjs#readme",
+  "homepage": "https://github.com/camoto-project/gamemapjs#readme",
   "devDependencies": {
     "command-line-args": "^5.1.1",
     "eslint": "^7.17.0",
