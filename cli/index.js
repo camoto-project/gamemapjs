@@ -22,6 +22,7 @@ const g_debug = Debug.extend('cli');
 
 import fs from 'fs';
 import commandLineArgs from 'command-line-args';
+import chalk from 'chalk';
 import {
 	all as gamemapFormats,
 	Map2D,
@@ -31,6 +32,154 @@ import {
 
 class OperationsError extends Error {
 }
+console.log(chalk.red`test`,chalk.styles);
+// Draw a Map2D_Layer_Tiled using chalk.
+function drawLayerTiled(l)
+{
+	const colours = [
+		chalk.bgBlack.blueBright,
+		chalk.bgBlack.greenBright,
+		chalk.bgBlack.cyanBright,
+		chalk.bgBlack.redBright,
+		chalk.bgBlack.magentaBright,
+		chalk.bgBlack.yellowBright,
+		chalk.bgBlack.whiteBright,
+
+		//chalk.bgBlue.black,
+		chalk.bgBlue.blue,
+		chalk.bgBlue.green,
+		//chalk.bgBlue.cyan,
+		chalk.bgBlue.red,
+		chalk.bgBlue.magenta,
+		chalk.bgBlue.yellow,
+		chalk.bgBlue.white,
+		chalk.bgBlue.blackBright,
+		chalk.bgBlue.blueBright,
+		chalk.bgBlue.greenBright,
+		chalk.bgBlue.cyanBright,
+		chalk.bgBlue.redBright,
+		chalk.bgBlue.magentaBright,
+		chalk.bgBlue.yellowBright,
+		chalk.bgBlue.whiteBright,
+
+		chalk.bgGreen.black,
+		chalk.bgGreen.blue,
+		chalk.bgGreen.green,
+		//chalk.bgGreen.cyan,
+		chalk.bgGreen.red,
+		chalk.bgGreen.magenta,
+		chalk.bgGreen.yellow,
+		chalk.bgGreen.white,
+		chalk.bgGreen.blackBright,
+		chalk.bgGreen.blueBright,
+		chalk.bgGreen.greenBright,
+		chalk.bgGreen.cyanBright,
+		chalk.bgGreen.redBright,
+		chalk.bgGreen.magentaBright,
+		chalk.bgGreen.yellowBright,
+		chalk.bgGreen.whiteBright,
+
+		chalk.bgRed.black,
+		chalk.bgRed.blue,
+		chalk.bgRed.green,
+		//chalk.bgRed.cyan,
+		chalk.bgRed.red,
+		chalk.bgRed.magenta,
+		chalk.bgRed.yellow,
+		chalk.bgRed.white,
+		chalk.bgRed.blackBright,
+		chalk.bgRed.blueBright,
+		chalk.bgRed.greenBright,
+		chalk.bgRed.cyanBright,
+		chalk.bgRed.redBright,
+		chalk.bgRed.magentaBright,
+		chalk.bgRed.yellowBright,
+		chalk.bgRed.whiteBright,
+
+		chalk.bgMagenta.black,
+		chalk.bgMagenta.blue,
+		chalk.bgMagenta.green,
+		//chalk.bgMagenta.cyan,
+		chalk.bgMagenta.red,
+		chalk.bgMagenta.magenta,
+		chalk.bgMagenta.yellow,
+		chalk.bgMagenta.white,
+		chalk.bgMagenta.blackBright,
+		chalk.bgMagenta.blueBright,
+		chalk.bgMagenta.greenBright,
+		chalk.bgMagenta.cyanBright,
+		chalk.bgMagenta.redBright,
+		chalk.bgMagenta.magentaBright,
+		chalk.bgMagenta.yellowBright,
+		chalk.bgMagenta.whiteBright,
+
+		chalk.bgYellow.black,
+		chalk.bgYellow.blue,
+		chalk.bgYellow.green,
+		//chalk.bgYellow.cyan,
+		chalk.bgYellow.red,
+		chalk.bgYellow.magenta,
+		chalk.bgYellow.yellow,
+		chalk.bgYellow.white,
+		chalk.bgYellow.blackBright,
+		chalk.bgYellow.blueBright,
+		chalk.bgYellow.greenBright,
+		chalk.bgYellow.cyanBright,
+		chalk.bgYellow.redBright,
+		chalk.bgYellow.magentaBright,
+		chalk.bgYellow.yellowBright,
+		chalk.bgYellow.whiteBright,
+
+		chalk.bgWhite.black,
+		chalk.bgWhite.blue,
+		chalk.bgWhite.green,
+		//chalk.bgWhite.cyan,
+		chalk.bgWhite.red,
+		chalk.bgWhite.magenta,
+		chalk.bgWhite.yellow,
+		chalk.bgWhite.white,
+		chalk.bgWhite.blackBright,
+		chalk.bgWhite.blueBright,
+		chalk.bgWhite.greenBright,
+		chalk.bgWhite.cyanBright,
+		chalk.bgWhite.redBright,
+		chalk.bgWhite.magentaBright,
+		chalk.bgWhite.yellowBright,
+		chalk.bgWhite.whiteBright,
+
+		//chalk.bgBlack.black,
+		chalk.bgBlack.blue,
+		chalk.bgBlack.green,
+		//chalk.bgBlack.cyan,
+		chalk.bgBlack.red,
+		chalk.bgBlack.magenta,
+		chalk.bgBlack.yellow,
+		chalk.bgBlack.white,
+		chalk.bgBlack.blackBright,
+	];
+	let lastAlloc = 0;
+	let tilemap = [], lastColour = null;
+	for (let y = 0; y < l.layerH; y++) {
+		for (let x = 0; x < l.layerW; x++) {
+			const code = l.tiles[y][x];
+			if (code === undefined) {
+				// No tile here.
+				process.stdout.write(chalk.reset(' '));
+			} else {
+				if (!tilemap[code]) {
+					// Allocate a new colour.
+					tilemap[code] = {
+						c: lastAlloc++,
+					};
+				}
+				const tc = tilemap[code].c;
+				let clr = colours[tc % colours.length];
+				process.stdout.write(clr('░'));
+			}
+		}
+		process.stdout.write(chalk.reset(`\n`));
+	}
+}
 
 class Operations
 {
@@ -39,12 +188,12 @@ class Operations
 
 	info() {
 		const p = process.stdout.write.bind(process.stdout);
-		p(`Map class: ${this.map.constructor.name}\n`);
+		p(`Map class: ${this.map.type} [instanceof ${this.map.constructor.name}]\n`);
 
 		p(`Common properties:\n`);
 		p(' * Attributes:\n');
-		for (const a of this.map.attributes) {
-			p(`    - ${a.id}=${a.value}`);
+		for (const [ id, a ] of Object.entries(this.map.attributes)) {
+			p(`    - ${id}=${a.value}`);
 			switch (a.type) {
 				case 'int': p(` [min=${a.rangeMin} max=${a.rangeMax}]`); break;
 				case 'bool': p(` [true/false]`); break;
@@ -53,12 +202,27 @@ class Operations
 			p(`  # ${a.title}\n`);
 		}
 
-		if (this.map instanceof Map2D) {
-			p(`Map type: 2D layered\n`);
-			p(` * Number of layers: ${this.map.layers.length} (`);
-			p(Object.keys(this.map.layers).join(', ') + ')\n');
-		} else {
-			p(`Map type: Unknown\n`);
+		switch (this.map.type) {
+			case 'map2d':
+				p(`Map type: 2D layered\n`);
+				p(` * Number of layers: ${this.map.layers.length}\n`);
+				for (const l of this.map.layers) {
+					p(`   * ${l.title}: ${l.type}\n`);
+					switch (l.type) {
+						case 'tiled':
+							p(`     - Size: ${l.layerW}x${l.layerH}\n`);
+							drawLayerTiled(l);
+							break;
+
+						default:
+							break;
+					}
+				}
+				break;
+
+			default:
+				p(`Map type: Unknown\n`);
+				break;
 		}
 	}
 

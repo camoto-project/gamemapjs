@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/camoto-project/gamemapjs#readme",
   "devDependencies": {
+    "chalk": "^4.1.1",
     "command-line-args": "^5.1.1",
     "eslint": "^7.17.0",
     "mocha": "^8.2.1",
