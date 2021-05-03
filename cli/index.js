@@ -64,7 +64,7 @@ class Operations
 
 	open(params) {
 		if (!params.format) {
-			throw new OperationsError('open: must specify file format with -f.');
+			throw new OperationsError('open: must specify file format with -t.');
 		}
 		if (!params.target) {
 			throw new OperationsError('open: missing filename.');
@@ -176,7 +176,7 @@ class Operations
 Operations.names = {
 	info: [],
 	open: [
-		{ name: 'format', alias: 'f' },
+		{ name: 'format', alias: 't' },
 		{ name: 'target', defaultOption: true },
 	],
 	save: [
@@ -240,7 +240,7 @@ Commands:
   info | dump
     Display information about the opened map.
 
-  open -f <format> <file>
+  open -t <format> <file>
     Open the local <file> as a map in format <format>.
 
   save <file>
