@@ -81,6 +81,7 @@ export default class Item
 		 *
 		 *   `x` - offset the visual element horizontally in pixels, negative moves left.
 		 *   `y` - offset the visual element vertically in pixels, negative moves up.
+		 *   `yMirror` - flip the image vertically.
 		 *
 		 * In the text string, $0 switches to the initial/default colour, $1 is a
 		 * secondary colour, and so on.  "$$" is used for a single dollar sign, so

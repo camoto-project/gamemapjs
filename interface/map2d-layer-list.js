@@ -30,61 +30,25 @@ export default class Map2D_Layer_List extends Map2D_Layer
 	constructor() {
 		super();
 
+		this.type = '2d.list';
+
 		this.limits = {
 			...this.limits,
 
 			/**
-			 * Smallest map size.  Only used when all layers inherit this size.
-			 * For maps that cannot be resized, the min and max values will be the
-			 * same.
+			 * Limits for item coordinates in this layer.
+			 * All items must be >= minX/Y and <= maxX/Y.
 			 */
-			minimumLayerSize: {x: 0, y: 0},
-
-			/**
-			 * Largest possible map size.  Undefined means no limit.
-			 */
-			maximumLayerSize: {x: undefined, y: undefined},
-
-			/**
-			 * Smallest size of each individual tile/grid.  Only used when all layers
-			 * inherit this size.  For maps that cannot have the tile size changed,
-			 * the min and max values will be the same.
-			 */
-			minimumTileSize: {x: 1, y: 1},
-
-			/**
-			 * Smallest size of each individual tile/grid.  Undefined means no limit.
-			 */
-			maximumTileSize: {x: undefined, y: undefined},
+			minX: 0,
+			minY: 0,
+			maxX: undefined,
+			maxY: undefined,
 		};
-
-		/**
-		 * Size of the layer, in number of tiles.
-		 *
-		 * `undefined` means the map size is set globally and should not be
-		 * changed here.  If this value is set, it will be an Object with `x` and
-		 * `y` members and can be modified within the limits indicated by
-		 * `this.limits.minimumLayerSize` and `this.limits.maximumLayerSize`.
-		 */
-		this.layerSize = undefined;
-
-		/**
-		 * Size of the grid tiles in the layers, in pixels.
-		 *
-		 * `undefined` means the grid size is set globally and should not be
-		 * changed here.  If this value is set, it will be an Object with `x` and
-		 * `y` members and can be modified within the limits indicated by
-		 * `this.limits.minimumTileSize` and `this.limits.maximumTileSize`.
-		 *
-		 * Typically this will be something like 8x8 or 16x16.
-		 */
-		this.tileSize = undefined;
 
 		/**
 		 * Array of item in the layer.  Each item has the following properties:
 		 *
-		 *  - `x` and `y`: Coordinates in units of tiles (or if the tiles are 1x1,
-		 *    this works out as pixels).
+		 *  - `x` and `y`: Coordinates in pixels from upper left (0,0).
 		 *  - `code`: Opaque object code that represents this object.  Used for
 		 *    working out which image to display.  Could be a number, object, or
 		 *    something else as it is entirely up to the map format handler.  It

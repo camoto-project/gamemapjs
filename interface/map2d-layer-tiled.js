@@ -27,46 +27,42 @@ import Map2D_Layer from './map2d-layer.js';
  */
 export default class Map2D_Layer_Tiled extends Map2D_Layer
 {
-	constructor() {
-		super();
+	constructor(n = {}) {
+		super(n);
 
+		this.type = '2d.tiled';
+
+		const nl = (n && n.limits) || {};
 		this.limits = {
 			...this.limits,
 
 			/**
-			 * Smallest map size.  Only used when all layers inherit this size.
+			 * Smallest size for this layer.
 			 * For maps that cannot be resized, the min and max values will be the
 			 * same.
 			 */
-			minimumLayerSize: {x: 0, y: 0},
+			minLayerW: nl.minLayerW || 1,
+			minLayerH: nl.minLayerH || 1,
 
 			/**
 			 * Largest possible map size.  Undefined means no limit.
 			 */
-			maximumLayerSize: {x: undefined, y: undefined},
+			maxLayerW: nl.maxLayerW || undefined,
+			maxLayerH: nl.maxLayerH || undefined,
 
 			/**
-			 * Smallest size of each individual tile/grid.  Only used when all layers
-			 * inherit this size.  For maps that cannot have the tile size changed,
-			 * the min and max values will be the same.
+			 * Smallest size of each individual tile/grid.  For maps that cannot have
+			 * the tile size changed, the min and max values will be the same.
 			 */
-			minimumTileSize: {x: 1, y: 1},
+			minTileW: nl.minTileW || 1,
+			minTileH: nl.minTileH || 1,
 
 			/**
-			 * Smallest size of each individual tile/grid.  Undefined means no limit.
+			 * Largest size of each individual tile/grid.  Undefined means no limit.
 			 */
-			maximumTileSize: {x: undefined, y: undefined},
+			maxTileW: nl.maxTileW || undefined,
+			maxTileH: nl.maxTileH || undefined,
 		};
-
-		/**
-		 * Size of the layer, in number of tiles.
-		 *
-		 * `undefined` means the map size is set globally and should not be
-		 * changed here.  If this value is set, it will be an Object with `x` and
-		 * `y` members and can be modified within the limits indicated by
-		 * `this.limits.minimumLayerSize` and `this.limits.maximumLayerSize`.
-		 */
-		this.layerSize = undefined;
 
 		/**
 		 * Size of the grid tiles in the layers, in pixels.
@@ -76,9 +72,27 @@ export default class Map2D_Layer_Tiled extends Map2D_Layer
 		 * `y` members and can be modified within the limits indicated by
 		 * `this.limits.minimumTileSize` and `this.limits.maximumTileSize`.
 		 *
+		 * After modifying call checkLimits() on the map handler to confirm the new
+		 * limits are valid (e.g. Cosmo has a fixed number of tiles, so enlarging
+		 * one dimension requires the other to be shrunk.)
+		 *
 		 * Typically this will be something like 8x8 or 16x16.
 		 */
-		this.tileSize = undefined;
+		this.tileW = n.tileW;
+		this.tileH = n.tileH
+
+		/**
+		 * Size of the layer, in number of tiles.
+		 *
+		 * The size can always be changed within the limits above.  If the format
+		 * does not support having the size changed then the limits will only permit
+		 * one set of dimensions.
+		 *
+		 * TODO: how to indicate that the map has multiple layers that must be the
+		 * same size.
+		 */
+		this.layerW = n.layerW;
+		this.layerH = n.layerH;
 
 		/**
 		 * Two-dimensional array of tiles.
@@ -86,6 +100,89 @@ export default class Map2D_Layer_Tiled extends Map2D_Layer
 		 * Each value is an opaque tile code (could be a number, and object, or
 		 * something else depending on what works best for the map handler).
 		 */
-		this.tiles = [];
+		this.tiles = n.tiles || [];
+	}
+
+	/**
+	 * Convert a map code into an imagelist index.
+	 *
+	 * @param {object} code
+	 *   Map code supplied by the format handler.
+	 *
+	 * @param {Array<Image>} tileset
+	 *   An array of images in the current tileset.  Typically one of these will
+	 *   be returned in the `img` property.
+	 *
+	 * @return {Object} with the below properties.
+	 */
+	// eslint-disable-next-line no-unused-vars
+	imageFromCode(code, tileset) {
+		return {
+			/**
+			 * Overlay a hex number on the tile.
+			 *
+			 * null: show no digits
+			 * 0x10..0x1F = 0..F,
+			 * 0x100-0x1FF = 00..FF,
+			 * 0x10000-0x1FFFF = 0000..FFFF
+			 */
+			digit: null,
+
+			/**
+			 * Image to show from the `tileset` array, or null to show no image.  In
+			 * this case one of the other values must be set as an entirely invisible
+			 * object is undesirable for the user experience.
+			 *
+			 * If non-null, it is an array of objects which will be drawn on top of
+			 * each other (so overlays can be achieved) with the first array element
+			 * drawn first.  Each array element has these properties:
+			 *
+			 *  - `image` - actual picture to display, from an entry in `tileset`.
+			 *  - `offsetX` - number of pixels to shift image, left if negative.
+			 *  - `offsetY` - number of pixels to shift image, up if negative.
+			 */
+			compositeImage: null,
+
+			/**
+			 * Overlay some small icons to suggest movement in one or more directions.
+			 */
+			arrow: {
+				left: false,
+				right: false,
+				up: false,
+				down: false,
+			},
+		};
+	}
+
+	/**
+	 * Is the given tile permitted at the specified location?
+	 *
+	 * This function is called for each coordinate as the user moves the cursor
+	 * around, so avoid slow checks.
+	 *
+	 * If an item is only permitted a limited number of times in the level, set
+	 * this limit on the item itself so it need only be checked once when the
+	 * user first selects it.
+	 *
+	 * @param {Number} x
+	 *   Proposed X coordinate, in tiles.
+	 *
+	 * @param {Number} y
+	 *   Proposed Y coordinate, in tiles.
+	 *
+	 * @param {Map2D_Item} item
+	 *   Code from this.items.
+	 *
+	 * @return Object with `.valid` set to `true` if the tile is permitted, or
+	 *   `false` if not.
+	 */
+	// eslint-disable-next-line no-unused-vars
+	isPermittedAt(x, y, item) {
+		return {
+			valid: false,
+			reason: 'The isPermittedAt() function has not been implemented by the '
+				+ 'map layer.',
+		};
 	}
 }

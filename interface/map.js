@@ -131,10 +131,10 @@ export default class Map
 		 * Some maps have a custom palette, which will be supplied here.  This
 		 * value will be one of:
 		 *
-		 *  - null: layer-specific palettes not supported.
-		 *  - undefined: layer-specific palettes supported, but none set yet.
+		 *  - null: map-specific palettes not supported.
+		 *  - undefined: map-specific palettes supported, but none set yet.
 		 *  - gamegraphicsjs `Palette` instance: custom palette to use.
 		 */
-		this.palette = undefined;
+		this.palette = null;
 	}
 }
