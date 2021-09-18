@@ -18,3 +18,4 @@
  */
 
 export { default as map_cosmo } from './map-cosmo.js';
+export { default as map_ddave } from './map-ddave.js';
