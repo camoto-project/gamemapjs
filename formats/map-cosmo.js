@@ -75,39 +75,23 @@ const COSMO_BG_TILE_HEIGHT = 8;
 
 class Layer_CosmoBG extends Map2D_Layer_Tiled
 {
-	constructor(tileCodes, map) {
-		super();
-
-		for (let i = 0; i < tileCodes.length; i++) {
-			const x = i % map.mapSize.x;
-			const y = (i / map.mapSize.x) >>> 0;
-			if (!this.tiles[y]) this.tiles[y] = [];
-
-			// Turn zero codes into blanks.
-			if (tileCodes[i] === 0) {
-				continue;
-				//tileCodes[i] = null;
-			}
-
-			let item = new Item();
-
-			let imageIndex = Math.floor(tileCodes[i] / 8);
-			if (imageIndex >= 2000) {
-				imageIndex = 2000 + (imageIndex - 2000) / 5;
-			}
-			if (imageIndex >= 3000) {
-				debug(`Tile code ${tileCodes[i]} (image index ${imageIndex}) is out `
-					+ `of range (max 2999).`);
-				item.display = [
-					{icon: Item.Icons.Error},
-				];
-			} else {
-				item.display = [
-					{i: imageIndex}
-				];
-			}
-			this.tiles[y][x] = item;
-		}
+	constructor(tiles) {
+		const mapW = tiles[0].length;
+		const mapH = tiles.length;
+		super({
+			title: 'Background',
+			limits: {
+				minLayerX: COSMO_BG_MIN_X,
+				minLayerY: COSMO_BG_MIN_Y,
+				maxLayerX: COSMO_BG_MAX_X,
+				maxLayerY: COSMO_BG_MAX_Y,
+			},
+			layerW: mapW,
+			layerH: mapH,
+			tileW: COSMO_BG_TILE_WIDTH,
+			tileH: COSMO_BG_TILE_HEIGHT,
+			tiles,
+		});
 	}
 
 	isPermittedAt(x, y, item) {
@@ -121,6 +105,14 @@ class Layer_CosmoBG extends Map2D_Layer_Tiled
 		}
 
 		return true;
+	}
+
+	imageFromCode(code) {
+		if (code >= 2000) {
+			return this.tilesetFG.clone(code - 2000, 1);
+		} else {
+			return this.tilesetBG.clone(code || 0, 1);
+		}
 	}
 }
 
@@ -247,12 +239,17 @@ class Layer_CosmoActors extends Map2D_Layer_List
 
 		return display;
 	}
+
+	imageFromCode(code) {
+		//return this.tileset.clone(code || 0, 1);
+		return null; // TEMP
+	}
 }
 
 class Map2D_Cosmo extends Map2D
 {
-	constructor(bgTileCodes, actors, mapWidth) {
-		super();
+	constructor(bgTileCodes, actors) {
+		super({});
 
 		this.limits = {
 			...this.limits,
@@ -260,20 +257,32 @@ class Map2D_Cosmo extends Map2D
 			maximumTileSize: {x: 8, y: 8},
 		};
 
-		this.mapSize = {
-			x: mapWidth,
-			y: Math.floor(COSMO_BG_LEN / mapWidth),
-		};
-
 		this.layers.push(
-			new Layer_CosmoBG(bgTileCodes, this),
-			new Layer_CosmoActors(actors, this),
+			new Layer_CosmoBG(bgTileCodes),
+			//new Layer_CosmoActors(actors, this),
 		);
+	}
+
+	getSize() {
+		return {
+			x: this.layers[0].tiles[0].length * this.layers[0].tileW,
+			y: this.layers[0].tiles.length * this.layers[0].tileH,
+		};
 	}
 
 	queryResize(proposed) {
 		// Make sure the new dimensions are within the limits.
 		let permitted = super.queryResize(proposed);
+
+		// Only these widths are permitted by the game (source: ModdingWiki).
+		const allowedWidths = [ 1024, 512, 256, 128, 64 ];
+		for (const aw of allowedWidths) {
+			if (permitted.x > aw) {
+				permitted.x = aw;
+				break;
+			}
+		}
+		permitted.x = Math.max(64, permitted.x); // minimum size
 
 		if (permitted.y === this.mapSize.y) {
 			// Y hasn't changed, assume X has, so recalculate Y.
@@ -285,11 +294,19 @@ class Map2D_Cosmo extends Map2D
 	}
 
 	resize(newSize) {
+		throw new Error('Not implemented yet!');
+		// TODO: Have to resize layer0 arrays.
 		super.resize(newSize); // throw if queryResize() fails
 		this.mapSize = {
 			x: newSize.x,
 			y: newSize.y,
 		};
+	}
+
+	setTilesets(ts) {
+		this.layers[0].tilesetBG = ts.solid;
+		this.layers[0].tilesetFG = ts.masked;
+		//this.layers[1].tileset = ts.actors;
 	}
 }
 
@@ -368,13 +385,30 @@ export default class Map_Cosmo extends MapHandler
 			});
 		}
 
+		const mapW = header.mapWidth;
+		const mapH = Math.floor(COSMO_BG_LEN / mapW);
 		let tileCodes = [];
-		for (let i = 0; i < COSMO_BG_LEN; i++) {
-			const tileCode = buffer.read(RecordType.int.u16le);
-			tileCodes.push(tileCode);
+		for (let y = 0; y < mapH; y++) {
+			tileCodes[y] = [];
+			for (let x = 0; x < mapW; x++) {
+				const code = buffer.read(RecordType.int.u16le);
+
+				// Turn zero codes into blanks.
+				if (code === 0) {
+					tileCodes[y][x] = undefined;
+					continue;
+				}
+
+				let tileCode = Math.floor(code / 8);
+				if (tileCode > 2000) {
+					let maskCode = tileCode - 2000;
+					tileCode = 2000 + (maskCode / 5);
+				}
+				tileCodes[y][x] = tileCode;
+			}
 		}
 
-		let map = new Map2D_Cosmo(tileCodes, actors, header.mapWidth);
+		let map = new Map2D_Cosmo(tileCodes, actors);
 
 		map.attributes['bgmusic'] = {
 			title: 'Background music',
